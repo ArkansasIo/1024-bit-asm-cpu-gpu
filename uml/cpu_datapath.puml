@@ -1,0 +1,27 @@
+@startuml
+title 1024-bit CPU Datapath (Skeleton)
+
+actor "Program" as Prog
+
+component "Instruction Memory / Opcode Stream\nmemory[]" as IM
+component "PC Register\npc" as PC
+component "Decoder (Placeholder)" as DEC
+component "ALU (1024-bit helpers)" as ALU
+component "Register File\nregfile[16]\n(16x64 limbs each)" as RF
+
+Prog --> IM : fetch qword opcode
+PC --> IM : pc index
+IM --> DEC : opcode
+DEC --> ALU : op + dst/src/imm
+ALU --> RF : read operands / write results
+DEC --> PC : update pc (pc+1 or branch)
+
+note right of ALU
+Implemented helpers (so far):
+- mov
+- add
+- sub
+- eq compare
+end note
+@enduml
+

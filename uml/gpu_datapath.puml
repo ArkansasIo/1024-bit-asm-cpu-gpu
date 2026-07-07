@@ -1,0 +1,27 @@
+@startuml
+title 1024-bit GPU Datapath (Skeleton)
+
+actor "Host" as Host
+
+component "Control Memory\nmemory[]" as CM
+component "Dispatch PC\npc" as PC
+component "Work-item Scheduler\nwork_items/current_wi" as SCH
+component "Decoder (Placeholder)" as DEC
+component "Vector ALU\n(copy/add helpers)" as VALU
+component "Vector Register File\nvregfile" as VRF
+
+Host --> CM : load control/kernel program
+PC --> CM : fetch qword
+CM --> DEC : opcode
+DEC --> SCH : setup work-items (placeholder)
+SCH --> VALU : execute kernel per work-item
+VALU --> VRF : read/write vectors (1024-bit limbs)
+DEC --> PC : update pc / halt
+
+note right of VALU
+Implemented helpers (so far):
+- copy_vreg_1024
+- add_vreg_1024
+end note
+@enduml
+

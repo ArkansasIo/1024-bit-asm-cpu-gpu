@@ -1,0 +1,19 @@
+@startuml
+title 1024-bit Value & Register Memory Model
+
+component "1024-bit Register" as R
+component "Register File" as RF
+component "Vector Register File" as VRF
+
+R .. RF : regfile[k] holds 16x64 limbs
+R .. VRF : vregfile[v][i] holds i-th limb
+
+R : limb[0..15] each is u64
+
+note bottom
+Current model:
+- Values stored explicitly as 16 qwords (limbs)
+- No shared RAM yet beyond memory[]
+end note
+@enduml
+

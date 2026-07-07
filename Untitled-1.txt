@@ -1,0 +1,198 @@
+; Simple 64-bit Virtual CPU Emulator (NASM/Linux x86-64)
+
+section .data
+    ; Registers: 8 * 8 bytes = 64 bytes
+    regs: dq 0, 0, 0, 0, 0, 0, 0, 0
+    ; Stack Pointer: 8 bytes
+    pc: dq 0                ; Program Counter
+    sp: dq 1000             ; Stack Pointer (initialized to top of memory)
+    memory: dq 0x10, 0, 16, 0x10, 1, 17, 0x20, 0, 1, 0x30, 12, 0xFF, 0x10, 2, 99, 0xFF
+    ; Program:
+    ; 0: MOV R0, 16
+    ; 3: MOV R1, 17
+    ; 6: ADD R0, R1
+    ; 9: JMP 12
+    ; 12: MOV R2, 99
+    ; 15: HALT
+
+section .text
+    global _start
+
+_start:
+    ; Emulator Loop
+.fetch_decode_execute:
+    mov rax, [pc]           ; Fetch instruction address
+    mov rbx, [memory + rax * 8] ; Fetch opcode
+
+    cmp rbx, 0xFF           ; HALT?
+    je .halt
+
+    ; Simple decoding
+    cmp rbx, 0x10           ; MOV R?, Val
+    je .mov
+
+    cmp rbx, 0x20           ; ADD R?, R?
+    je .add
+
+    cmp rbx, 0x30           ; JMP Addr
+    je .jmp
+
+    cmp rbx, 0x40           ; LD R?, Addr
+    je .ld
+
+    cmp rbx, 0x50           ; ST R?, Addr
+    je .st
+
+    cmp rbx, 0x60           ; SUB R?, R?
+    je .sub
+
+    cmp rbx, 0x70           ; BEQ R?, R?, Addr
+    je .beq
+
+    cmp rbx, 0x80           ; PUSH R?
+    je .push
+
+    cmp rbx, 0x90           ; POP R?
+    je .pop
+
+    cmp rbx, 0xA0           ; PRINT R?
+    je .print
+
+    jmp .halt               ; Unknown instruction
+
+.mov:
+    inc qword [pc]
+    mov rax, [pc]
+    mov rcx, [memory + rax * 8] ; Register index
+    inc qword [pc]
+    mov rax, [pc]
+    mov rdx, [memory + rax * 8] ; Value
+    mov [regs + rcx * 8], rdx
+    inc qword [pc]
+    jmp .fetch_decode_execute
+
+.add:
+    inc qword [pc]
+    mov rax, [pc]
+    mov rcx, [memory + rax * 8] ; Dest Reg
+    inc qword [pc]
+    mov rax, [pc]
+    mov rdx, [memory + rax * 8] ; Src Reg
+    mov r8, [regs + rcx * 8]
+    add r8, [regs + rdx * 8]
+    mov [regs + rcx * 8], r8
+    inc qword [pc]
+    jmp .fetch_decode_execute
+
+.jmp:
+    inc qword [pc]
+    mov rax, [pc]
+    mov rcx, [memory + rax * 8] ; Address
+    mov [pc], rcx
+    jmp .fetch_decode_execute
+
+.ld:
+    inc qword [pc]
+    mov rax, [pc]
+    mov rcx, [memory + rax * 8] ; Reg
+    inc qword [pc]
+    mov rax, [pc]
+    mov rdx, [memory + rax * 8] ; Addr
+    mov r8, [memory + rdx * 8]
+    mov [regs + rcx * 8], r8
+    inc qword [pc]
+    jmp .fetch_decode_execute
+
+.st:
+    inc qword [pc]
+    mov rax, [pc]
+    mov rcx, [memory + rax * 8] ; Reg
+    inc qword [pc]
+    mov rax, [pc]
+    mov rdx, [memory + rax * 8] ; Addr
+    mov r8, [regs + rcx * 8]
+    mov [memory + rdx * 8], r8
+    inc qword [pc]
+    jmp .fetch_decode_execute
+
+.sub:
+    inc qword [pc]
+    mov rax, [pc]
+    mov rcx, [memory + rax * 8] ; Dest Reg
+    inc qword [pc]
+    mov rax, [pc]
+    mov rdx, [memory + rax * 8] ; Src Reg
+    mov r8, [regs + rcx * 8]
+    sub r8, [regs + rdx * 8]
+    mov [regs + rcx * 8], r8
+    inc qword [pc]
+    jmp .fetch_decode_execute
+
+.beq:
+    inc qword [pc]
+    mov rax, [pc]
+    mov rcx, [memory + rax * 8] ; Reg 1
+    inc qword [pc]
+    mov rax, [pc]
+    mov rdx, [memory + rax * 8] ; Reg 2
+    inc qword [pc]
+    mov rax, [pc]
+    mov r8, [memory + rax * 8]  ; Target Addr
+    
+    mov r9, [regs + rcx * 8]
+    cmp r9, [regs + rdx * 8]
+    je .do_jump
+    inc qword [pc]
+    jmp .fetch_decode_execute
+
+.do_jump:
+    mov [pc], r8
+    jmp .fetch_decode_execute
+
+.push:
+    inc qword [pc]
+    mov rax, [pc]
+    mov rcx, [memory + rax * 8] ; Reg
+    sub qword [sp], 1
+    mov rdx, [sp]
+    mov r8, [regs + rcx * 8]
+    mov [memory + rdx * 8], r8
+    inc qword [pc]
+    jmp .fetch_decode_execute
+
+.pop:
+    inc qword [pc]
+    mov rax, [pc]
+    mov rcx, [memory + rax * 8] ; Reg
+    mov rdx, [sp]
+    mov r8, [memory + rdx * 8]
+    mov [regs + rcx * 8], r8
+    add qword [sp], 1
+    inc qword [pc]
+    jmp .fetch_decode_execute
+
+.print:
+    inc qword [pc]
+    mov rax, [pc]
+    mov rcx, [memory + rax * 8] ; Reg
+    
+    ; Output using syscall
+    mov rdi, [regs + rcx * 8]
+    ; Simple way to print: use a helper
+    push rcx
+    call .print_helper
+    pop rcx
+    
+    inc qword [pc]
+    jmp .fetch_decode_execute
+
+; Helper: Print number in RDI
+.print_helper:
+    ; Convert RDI to string and print (simplified for demo)
+    ; This is a placeholder for actual number conversion
+    ret
+
+.halt:
+    mov rax, 60             ; syscall: exit
+    xor rdi, rdi            ; code: 0
+    syscall
