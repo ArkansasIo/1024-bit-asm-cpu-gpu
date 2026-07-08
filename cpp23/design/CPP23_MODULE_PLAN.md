@@ -5,6 +5,7 @@ Planned module split:
 - `src/cpu/`
 - `src/gpu/`
 - `src/system/`
+- `src/modules/`
 - `src/apps/`
 
 Future additions:

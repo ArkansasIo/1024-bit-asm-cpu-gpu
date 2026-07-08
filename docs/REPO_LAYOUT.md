@@ -11,6 +11,9 @@ This project is organized as a small hardware-and-ISA scaffold.
 ## `docs/`
 - `ARCHITECTURE.md` - high-level architecture.
 - `ISA.md` - opcode layout.
+- `MULTIPLICATION_WIDTHS.md` - 1024-bit multiply rules for 8/16/32/64-bit scalars.
+- `SHIFT_BY_64.md` - limb-aligned 64-bit shift and power-of-two multiply rules.
+- `BIOS_CMOS_OS.md` - BIOS, CMOS, NVRAM, API, GUI, and OS model.
 - `MEMORY_MODEL.md` - register and memory model.
 - `EXTENSION_PLAN.md` - future work.
 - `SYSTEM_COMPONENTS.md` - motherboard and surrounding component overview.

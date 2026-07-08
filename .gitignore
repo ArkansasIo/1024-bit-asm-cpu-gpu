@@ -4,6 +4,9 @@
 *.exe
 *.out
 build/
+build-*/
+cpp23/build/
+cpp23/build-*/
 bin/
 
 # Editor and OS noise

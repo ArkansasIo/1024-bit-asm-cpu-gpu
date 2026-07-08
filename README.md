@@ -10,6 +10,9 @@ Each 1024-bit value is represented as 16 64-bit limbs.
 - `src/` - split-out source and include tree for CPU, GPU, and system components.
 - `docs/ARCHITECTURE.md` - architecture overview.
 - `docs/ISA.md` - opcode layout and instruction notes.
+- `docs/MULTIPLICATION_WIDTHS.md` - 1024-bit multiply rules for 8/16/32/64-bit scalars.
+- `docs/SHIFT_BY_64.md` - limb-aligned shift and power-of-two multiply rules.
+- `docs/BIOS_CMOS_OS.md` - BIOS, CMOS, NVRAM, API, GUI, and OS model.
 - `docs/MEMORY_MODEL.md` - register and memory model.
 - `docs/EXTENSION_PLAN.md` - next-step design notes.
 - `docs/SYSTEM_COMPONENTS.md` - motherboard, RAM, storage, power, and bus overview.

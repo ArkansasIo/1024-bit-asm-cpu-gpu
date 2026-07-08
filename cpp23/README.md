@@ -12,9 +12,11 @@ The tree is organized as a small library-style project with headers, source file
 ## Layout
 - `include/` - shared types and constants
 - `src/` - CPU, GPU, and system source files
+- `src/modules/` - finer-grained CPU, GPU, and system module sources
 - `docs/` - architecture and design notes
 - `design/` - reference survey and implementation plan
 - `uml/` - PlantUML diagrams
 - `examples/` - sample programs
 - `tests/` - smoke test scaffolding
+- `src/firmware/` and `src/os/` - BIOS/CMOS/NVRAM and OS source layers
 - `CMakeLists.txt` - C++23 build entry point

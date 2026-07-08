@@ -78,4 +78,12 @@ struct SystemState {
     CoolingState* cooling{};
 };
 
+struct FirmwareState {
+    std::uint64_t bios_version{};
+    std::uint64_t cmos_bytes{};
+    std::uint64_t nvram_bytes{};
+    bool gui_enabled{};
+    bool api_enabled{};
+};
+
 } // namespace cpu_gpu_1024
