@@ -1,0 +1,23 @@
+@startuml
+title C++23 System Components
+
+component "SystemModel" as SYS
+component "MotherboardLayout" as BOARD
+component "Cpu1024" as CPU
+component "Gpu1024" as GPU
+component "MemoryRegion" as RAM
+component "MemoryRegion" as ROM
+component "StorageDevice" as STO
+component "PowerState" as PWR
+component "CoolingState" as COOL
+
+SYS --> BOARD
+SYS --> CPU
+SYS --> GPU
+SYS --> RAM
+SYS --> ROM
+SYS --> STO
+SYS --> PWR
+SYS --> COOL
+
+@enduml

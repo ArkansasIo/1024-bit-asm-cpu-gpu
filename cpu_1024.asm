@@ -1,68 +1,55 @@
 ; cpu_1024.asm
-; 1024-bit CPU *emulator* skeleton (NASM / x86-64 Linux-style syscall ABI)
+; 1024-bit CPU emulator scaffold (NASM / x86-64 Linux-style syscall ABI)
 ;
-; Notes:
-; - This is a structural placeholder: a register file of 16 x 64-bit limbs
-;   represents a 1024-bit register as 16x64.
-; - Instruction decoding is stubbed; the goal is to provide the requested
-;   “1024 bit cpu” asm file with a workable runtime loop and a clear ISA
-;   expansion point.
+; A 1024-bit register is represented as 16 qwords.
 ;
-; ISA (placeholder):
-;   opcode stream is stored as qwords in memory[].
-;   Each handler demonstrates how to move/ADD across 1024-bit registers.
+; Current CPU opcodes:
+;   0xFF HALT
+;   0x01 MOV_IMM
+;   0x02 ADD
+;   0x03 SUB
+;   0x04 BEQ
 ;
-; Build (example):
-;   nasm -felf64 cpu_1024.asm -o cpu_1024.o && ld cpu_1024.o -o cpu_1024
+; Build example:
+;   nasm -felf64 cpu_1024.asm -o cpu_1024.o
+;   ld cpu_1024.o -o cpu_1024
 
 %define SYS_exit 60
-%define SYS_write 1
-%define STDOUT 1
+
+%define OP_HALT    0xFF
+%define OP_MOV_IMM 0x01
+%define OP_ADD     0x02
+%define OP_SUB     0x03
+%define OP_BEQ     0x04
 
 section .data
-    ; 1024-bit register file: 16 registers x (16 limbs x 8 bytes)
-    ; total = 16*16*8 = 2048 bytes
-    regfile: times (16*16) dq 0
+    ; 16 registers x 16 limbs x 8 bytes = 2048 bytes.
+    regfile: times (16 * 16) dq 0
 
     pc: dq 0
-    sp: dq 0x2000
 
-    ; Simplified memory (qwords)
-    ; Program example (halts immediately): [0] = opcode for HALT
-    memory: dq 0xFFFF_FFFF_FFFF_FFFF
-
-    ; Register-operand temp indices
-    tmp_dst: dq 0
-    tmp_src: dq 0
-    tmp_baseaddr: dq 0
-
-    msg_tick: db "cpu_1024: tick", 10
-    msg_tick_len: equ $-msg_tick
+    ; Demo program:
+    ;   r0 = 1
+    ;   r1 = 2
+    ;   r0 += r1
+    ;   halt
+    memory:
+        dq OP_MOV_IMM | (0 << 8) | (0 << 16) | (1 << 24)
+        dq OP_MOV_IMM | (1 << 8) | (0 << 16) | (2 << 24)
+        dq OP_ADD | (0 << 8) | (1 << 16)
+        dq OP_HALT
 
 section .text
     global _start
 
-; ------------------------------------------------------------
-; helpers
-; ------------------------------------------------------------
-
-; write(fd=STDOUT, buf=msg_tick, len)
-print_tick:
-    mov rax, SYS_write
-    mov rdi, STDOUT
-    lea rsi, [rel msg_tick]
-    mov rdx, msg_tick_len
-    syscall
-    ret
-
-; Zero a 1024-bit register
-; in: rcx = register index (0..15)
+; Zero a 1024-bit register.
+; in: rcx = register index
 zero_reg_1024:
-    ; offset = reg_index * 16 limbs * 8
+    lea rdi, [rel regfile]
     mov rax, rcx
-    imul rax, 16
-    imul rax, 8
-    lea rdi, [rel regfile + rax]
+    shl rax, 7
+    add rdi, rax
+
     mov r8, 16
 .zr_loop:
     mov qword [rdi], 0
@@ -72,19 +59,17 @@ zero_reg_1024:
     ret
 
 ; Move 1024-bit register: dst = src
-; in: rcx=dst, rdx=src
+; in: rcx = dst, rdx = src
 mov_reg_1024:
-    ; dst offset
+    lea rdi, [rel regfile]
     mov rax, rcx
-    imul rax, 16
-    imul rax, 8
-    lea rdi, [rel regfile + rax]
+    shl rax, 7
+    add rdi, rax
 
-    ; src offset
+    lea rsi, [rel regfile]
     mov rax, rdx
-    imul rax, 16
-    imul rax, 8
-    lea rsi, [rel regfile + rax]
+    shl rax, 7
+    add rsi, rax
 
     mov r8, 16
 .ml_loop:
@@ -97,21 +82,18 @@ mov_reg_1024:
     ret
 
 ; Add 1024-bit registers: dst += src
-; in: rcx=dst, rdx=src
+; in: rcx = dst, rdx = src
 add_reg_1024:
-    ; dst offset
+    lea rdi, [rel regfile]
     mov rax, rcx
-    imul rax, 16
-    imul rax, 8
-    lea rdi, [rel regfile + rax]
+    shl rax, 7
+    add rdi, rax
 
-    ; src offset
+    lea rsi, [rel regfile]
     mov rax, rdx
-    imul rax, 16
-    imul rax, 8
-    lea rsi, [rel regfile + rax]
+    shl rax, 7
+    add rsi, rax
 
-    ; carry in CF
     clc
     mov r8, 16
 .ar_loop:
@@ -124,26 +106,19 @@ add_reg_1024:
     jnz .ar_loop
     ret
 
-; ------------------------------------------------------------
-; extra 1024-bit operations
-; ------------------------------------------------------------
-
-; Sub: dst -= src
-; in: rcx=dst, rdx=src
+; Subtract 1024-bit registers: dst -= src
+; in: rcx = dst, rdx = src
 sub_reg_1024:
-    ; dst offset
+    lea rdi, [rel regfile]
     mov rax, rcx
-    imul rax, 16
-    imul rax, 8
-    lea rdi, [rel regfile + rax]
+    shl rax, 7
+    add rdi, rax
 
-    ; src offset
+    lea rsi, [rel regfile]
     mov rax, rdx
-    imul rax, 16
-    imul rax, 8
-    lea rsi, [rel regfile + rax]
+    shl rax, 7
+    add rsi, rax
 
-    ; CF as borrow
     clc
     mov r8, 16
 .sr_loop:
@@ -156,21 +131,19 @@ sub_reg_1024:
     jnz .sr_loop
     ret
 
-; Compare: sets ZF-like behavior in rax (1 if equal else 0)
-; in: rcx=a, rdx=b
-; out: rax=1 if equal else 0
+; Compare 1024-bit registers.
+; in: rcx = a, rdx = b
+; out: rax = 1 if equal, else 0
 cmp_reg_1024_eq:
-    ; a offset
+    lea rdi, [rel regfile]
     mov r8, rcx
-    imul r8, 16
-    imul r8, 8
-    lea rdi, [rel regfile + r8]
+    shl r8, 7
+    add rdi, r8
 
-    ; b offset
+    lea rsi, [rel regfile]
     mov r8, rdx
-    imul r8, 16
-    imul r8, 8
-    lea rsi, [rel regfile + r8]
+    shl r8, 7
+    add rsi, r8
 
     mov r9, 16
     xor eax, eax
@@ -186,55 +159,85 @@ cmp_reg_1024_eq:
 .not_eq:
     ret
 
-; ------------------------------------------------------------
-; opcode layout (placeholder / easy to extend)
-; ------------------------------------------------------------
-; opcode qword fields (little-endian):
-;   bits  0..7   : op
-;   bits  8..15  : dst
-;   bits 16..23  : src
-;   bits 24..63  : imm (unused for now)
-;
-; Supported placeholder ops:
-;   0x01 MOV  dst, imm64   (imm still treated as qword, truncated)
-;   0x02 ADD  dst, src
-;   0x03 SUB  dst, src
-;   0x04 BEQ  rA, rB, target (target in next qword)
-;
-; Memory[] holds opcode qwords; pc is qword index.
+; Load a 64-bit immediate into the low limb of a 1024-bit register.
+; in: rcx = register index, rbx = imm64
+load_reg_imm64:
+    call zero_reg_1024
 
-%define OP_HALT 0xFF
-%define OP_MOV_IMM 0x01
-%define OP_ADD 0x02
-%define OP_SUB 0x03
-%define OP_BEQ 0x04
+    lea rdi, [rel regfile]
+    mov rax, rcx
+    shl rax, 7
+    add rdi, rax
 
-section .text
+    mov [rdi], rbx
+    ret
 
 _start:
-    ; initialize PC
     mov qword [rel pc], 0
 
-
 .cpu_loop:
-    ; tick output (helps confirm emulator is running)
-    call print_tick
-
-    ; fetch opcode
     mov rax, [rel pc]
-    mov rbx, [rel memory + rax*8]
+    lea r11, [rel memory]
+    mov rbx, [r11 + rax*8]
 
-    ; HALT opcode (all ones)
-    cmp rbx, 0xFFFF_FFFF_FFFF_FFFF
+    mov eax, ebx
+    and eax, 0xFF
+    cmp eax, OP_HALT
     je .halt
 
-    ; Placeholder decode:
-    ; In a real implementation the opcode would be structured with fields.
-    ; For now: unknown => halt.
+    mov ecx, ebx
+    shr ecx, 8
+    and ecx, 0xFF
+
+    mov edx, ebx
+    shr edx, 16
+    and edx, 0xFF
+
+    mov r9, rbx
+    shr r9, 24
+
+    cmp eax, OP_MOV_IMM
+    je .op_mov_imm
+    cmp eax, OP_ADD
+    je .op_add
+    cmp eax, OP_SUB
+    je .op_sub
+    cmp eax, OP_BEQ
+    je .op_beq
     jmp .halt
+
+.op_mov_imm:
+    mov rbx, r9
+    call load_reg_imm64
+    inc qword [rel pc]
+    jmp .cpu_loop
+
+.op_add:
+    call add_reg_1024
+    inc qword [rel pc]
+    jmp .cpu_loop
+
+.op_sub:
+    call sub_reg_1024
+    inc qword [rel pc]
+    jmp .cpu_loop
+
+.op_beq:
+    call cmp_reg_1024_eq
+    test rax, rax
+    jz .beq_not_taken
+
+    mov rax, [rel pc]
+    inc rax
+    mov rax, [r11 + rax*8]
+    mov [rel pc], rax
+    jmp .cpu_loop
+
+.beq_not_taken:
+    add qword [rel pc], 2
+    jmp .cpu_loop
 
 .halt:
     mov rax, SYS_exit
     xor rdi, rdi
     syscall
-

@@ -1,22 +1,44 @@
-# 1024-bit CPU/GPU asm (skeleton)
+# 1024-bit CPU/GPU asm
 
-This folder contains **NASM-style** assembly skeletons modeling a 1024-bit register as **16×64-bit limbs**.
+This repository contains NASM-style assembly for a simple 1024-bit CPU model and a matching GPU-style dispatch model.
+
+Each 1024-bit value is represented as 16 64-bit limbs.
 
 ## Files
-- `cpu_1024.asm` — CPU emulator skeleton + 1024-bit helpers (move/add/sub/eq-compare) + opcode layout placeholder.
-- `gpu_1024.asm` — GPU compute/dispatch skeleton + vector register helpers (copy/add) + dispatch loop placeholder.
+- `cpu_1024.asm` - CPU emulator scaffold with 1024-bit helpers and a small opcode loop.
+- `gpu_1024.asm` - GPU dispatch scaffold with 1024-bit vector helpers and a simple kernel loop.
+- `src/` - split-out source and include tree for CPU, GPU, and system components.
+- `docs/ARCHITECTURE.md` - architecture overview.
+- `docs/ISA.md` - opcode layout and instruction notes.
+- `docs/MEMORY_MODEL.md` - register and memory model.
+- `docs/EXTENSION_PLAN.md` - next-step design notes.
+- `docs/SYSTEM_COMPONENTS.md` - motherboard, RAM, storage, power, and bus overview.
+- `docs/REPO_LAYOUT.md` - directory map for the full scaffold.
+- `design/` - external reference survey and design notes.
+- `scripts/` - build helper scripts.
+- `examples/` - sample CPU/GPU programs.
+- `tests/` - smoke-test scaffold.
+- `include/` - shared constants and structure declarations.
+- `src/types/`, `src/structs/`, `src/modules/` - type, struct, and module scaffolding.
+- `cpp23/` - parallel C++23 implementation tree.
+- `uml/*.puml` - PlantUML diagrams for the CPU, GPU, memory model, and system components.
 
 ## Build
-NASM is required to assemble these files.
+You need NASM and a 64-bit linker.
 
-On Windows, you can install NASM (if missing) and then build, e.g.:
+Example on Linux or WSL:
 
 ```bat
-nasm -felf64 "cpu_1024.asm" -o cpu_1024.o && ld cpu_1024.o -o cpu_1024
-nasm -felf64 "gpu_1024.asm" -o gpu_1024.o && ld gpu_1024.o -o gpu_1024
+nasm -felf64 cpu_1024.asm -o cpu_1024.o
+ld cpu_1024.o -o cpu_1024
+
+nasm -felf64 gpu_1024.asm -o gpu_1024.o
+ld gpu_1024.o -o gpu_1024
 ```
 
-## Notes
-- This is currently a **structural placeholder**: instruction decoding/ISA is scaffolded but not fully wired end-to-end.
-- Next steps: wire opcode handlers to the helper routines and formalize an opcode format.
+## Status
+The core helpers are in place:
+- CPU: move, add, subtract, compare, immediate load
+- GPU: copy, add, dispatch loop
 
+The project is still a scaffold, but the files now line up with the design docs and diagrams.

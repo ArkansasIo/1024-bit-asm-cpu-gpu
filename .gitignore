@@ -1,0 +1,17 @@
+# Build outputs
+*.o
+*.obj
+*.exe
+*.out
+build/
+bin/
+
+# Editor and OS noise
+.DS_Store
+Thumbs.db
+.idea/
+Untitled-1.txt
+
+# Scratch files
+*.tmp
+*.log

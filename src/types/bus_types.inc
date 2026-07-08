@@ -1,0 +1,6 @@
+%include "../../include/common.inc"
+
+%define TYPE_BUS_MEMORY    BUS_TYPE_MEMORY
+%define TYPE_BUS_COMMAND   BUS_TYPE_COMMAND
+%define TYPE_BUS_EXPANSION BUS_TYPE_EXPANSION
+%define TYPE_BUS_STORAGE   BUS_TYPE_STORAGE

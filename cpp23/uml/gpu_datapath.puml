@@ -1,0 +1,18 @@
+@startuml
+title C++23 GPU Datapath
+
+component "Gpu1024" as GPU
+component "GpuState" as STATE
+component "control_memory" as CMEM
+component "WideWord[8]" as VREGS
+
+GPU --> STATE : owns
+GPU --> CMEM : loads kernel
+GPU --> VREGS : reads/writes vector values
+
+note right of GPU
+Dispatch is modelled as a small loop
+over work-items with copy/add vector ops.
+end note
+
+@enduml

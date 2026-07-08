@@ -1,59 +1,54 @@
 ; gpu_1024.asm
-; 1024-bit GPU *compute kernel launcher* skeleton (NASM / x86-64 Linux-style)
+; 1024-bit GPU dispatch scaffold (NASM / x86-64 Linux-style syscall ABI)
 ;
-; This is a structural placeholder that:
-; - Defines a 1024-bit vector register file (vector of 16x64-bit limbs).
-; - Implements a simple “kernel dispatch” loop over N work-items.
-; - Implements a sample kernel: vdst = vsrc (copy) or vdst += vsrc.
+; A 1024-bit vector register is represented as 16 qwords.
 ;
-; Kernel ISA (placeholder):
-;   opcode stream is stored as qwords in memory[].
-;   Each work-item executes the same kernel for now.
-
-; Build (example):
-;   nasm -felf64 gpu_1024.asm -o gpu_1024.o && ld gpu_1024.o -o gpu_1024
+; Current GPU opcodes:
+;   0xFF HALT
+;   0x10 VCOPY
+;   0x11 VADD
+;
+; Build example:
+;   nasm -felf64 gpu_1024.asm -o gpu_1024.o
+;   ld gpu_1024.o -o gpu_1024
 
 %define SYS_exit 60
-%define SYS_write 1
-%define STDOUT 1
+
+%define OP_HALT  0xFF
+%define OP_VCOPY 0x10
+%define OP_VADD  0x11
 
 section .data
-    ; 1024-bit vector register file: 8 vectors x 16 limbs
-    vregfile: times (8*16) dq 0
+    ; 8 vectors x 16 limbs x 8 bytes = 1024 bytes.
+    vregfile: times (8 * 16) dq 0
 
     pc: dq 0
-    memory: dq 0xFFFF_FFFF_FFFF_FFFF ; HALT
+
+    ; Demo kernel:
+    ;   v0 += v1
+    ;   halt
+    memory:
+        dq OP_VADD | (0 << 8) | (1 << 16)
+        dq OP_HALT
 
     work_items: dq 4
     current_wi: dq 0
 
-    ; Sample console message
-    msg_gpu: db "gpu_1024: dispatch", 10
-    msg_gpu_len: equ $-msg_gpu
-
 section .text
     global _start
 
-print_dispatch:
-    mov rax, SYS_write
-    mov rdi, STDOUT
-    lea rsi, [rel msg_gpu]
-    mov rdx, msg_gpu_len
-    syscall
-    ret
-
-; Copy 1024-bit vector register
-; in: rcx=dst vec idx (0..7), rdx=src vec idx
+; Copy 1024-bit vector register.
+; in: rcx = dst vec index, rdx = src vec index
 copy_vreg_1024:
+    lea rdi, [rel vregfile]
     mov rax, rcx
-    imul rax, 16
-    imul rax, 8
-    lea rdi, [rel vregfile + rax]
+    shl rax, 7
+    add rdi, rax
 
+    lea rsi, [rel vregfile]
     mov rax, rdx
-    imul rax, 16
-    imul rax, 8
-    lea rsi, [rel vregfile + rax]
+    shl rax, 7
+    add rsi, rax
 
     mov r8, 16
 .cv_loop:
@@ -66,17 +61,17 @@ copy_vreg_1024:
     ret
 
 ; Add 1024-bit vector register: dst += src
-; in: rcx=dst, rdx=src
+; in: rcx = dst vec index, rdx = src vec index
 add_vreg_1024:
+    lea rdi, [rel vregfile]
     mov rax, rcx
-    imul rax, 16
-    imul rax, 8
-    lea rdi, [rel vregfile + rax]
+    shl rax, 7
+    add rdi, rax
 
+    lea rsi, [rel vregfile]
     mov rax, rdx
-    imul rax, 16
-    imul rax, 8
-    lea rsi, [rel vregfile + rax]
+    shl rax, 7
+    add rsi, rax
 
     clc
     mov r8, 16
@@ -90,44 +85,59 @@ add_vreg_1024:
     jnz .av_loop
     ret
 
-; ------------------------------------------------------------
-; main loop
-; ------------------------------------------------------------
-
 _start:
     mov qword [rel pc], 0
 
-    call print_dispatch
-
 .gpu_loop:
-    ; fetch control opcode
-    mov rax, [rel pc]
-    mov rbx, [rel memory + rax*8]
-
-    cmp rbx, 0xFFFF_FFFF_FFFF_FFFF
-    je .halt
-
-    ; For now, ignore opcode fields and run a fixed kernel:
-    ; work-items times:
-    ;   v0 += v1
-
+    mov r11, [rel work_items]
     mov qword [rel current_wi], 0
-    mov r12, [rel work_items]
 
-.work_loop:
-    ; (placeholder) could index per work-item later
-    xor rcx, rcx      ; dst = 0
-    mov rdx, 1        ; src = 1
+.dispatch_loop:
+    mov rax, [rel current_wi]
+    cmp rax, r11
+    jge .halt
+
+    mov qword [rel pc], 0
+
+.kernel_loop:
+    mov rax, [rel pc]
+    lea r10, [rel memory]
+    mov rbx, [r10 + rax*8]
+
+    mov eax, ebx
+    and eax, 0xFF
+    cmp eax, OP_HALT
+    je .next_work_item
+
+    mov ecx, ebx
+    shr ecx, 8
+    and ecx, 0xFF
+
+    mov edx, ebx
+    shr edx, 16
+    and edx, 0xFF
+
+    cmp eax, OP_VCOPY
+    je .op_vcopy
+    cmp eax, OP_VADD
+    je .op_vadd
+    jmp .next_work_item
+
+.op_vcopy:
+    call copy_vreg_1024
+    inc qword [rel pc]
+    jmp .kernel_loop
+
+.op_vadd:
     call add_vreg_1024
+    inc qword [rel pc]
+    jmp .kernel_loop
 
+.next_work_item:
     inc qword [rel current_wi]
-    dec r12
-    jnz .work_loop
-
-    jmp .halt
+    jmp .dispatch_loop
 
 .halt:
     mov rax, SYS_exit
     xor rdi, rdi
     syscall
-

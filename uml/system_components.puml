@@ -1,0 +1,40 @@
+@startuml
+title System Component Overview
+
+component "Motherboard" as MB
+component "CPU\n(1024-bit asm model)" as CPU
+component "GPU\n(1024-bit asm model)" as GPU
+component "RAM" as RAM
+component "Firmware / ROM" as ROM
+component "Storage" as STO
+component "Chipset / I-O Hub" as CHIP
+component "Power Delivery" as PWR
+component "Cooling" as COOL
+component "PCIe / Expansion" as PCIE
+
+MB o-- CPU : socket/package
+MB o-- GPU : slot/package
+MB o-- RAM : memory channels
+MB o-- ROM : boot firmware
+MB o-- STO : persistent data
+MB o-- CHIP : board I/O
+MB o-- PWR : voltage regulation
+MB o-- COOL : thermal management
+MB o-- PCIE : expansion bus
+
+CPU --> RAM : loads/stores
+GPU --> RAM : shared buffers
+CPU --> GPU : command stream
+GPU --> CPU : results / interrupts
+ROM --> CPU : boot code
+STO --> RAM : program/data load
+CHIP --> STO : storage controller
+CHIP --> PCIE : peripheral routing
+
+note right of MB
+The current assembly project models
+CPU/GPU state and a simplified memory
+stream, not a full motherboard.
+end note
+
+@enduml

@@ -22,6 +22,9 @@ note right of VALU
 Implemented helpers (so far):
 - copy_vreg_1024
 - add_vreg_1024
+Current opcodes:
+- VCOPY
+- VADD
 end note
 @enduml
 

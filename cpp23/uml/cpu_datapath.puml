@@ -1,0 +1,19 @@
+@startuml
+title C++23 CPU Datapath
+
+component "Cpu1024" as CPU
+component "CpuState" as STATE
+component "opcode_memory" as IMEM
+component "WideWord[16]" as REGS
+
+CPU --> STATE : owns
+CPU --> IMEM : loads program
+CPU --> REGS : reads/writes 1024-bit values
+
+note right of CPU
+C++23 implementation uses std::array
+and std::span for fixed-size state and
+program loading.
+end note
+
+@enduml
