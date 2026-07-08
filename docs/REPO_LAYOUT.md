@@ -16,6 +16,7 @@ This project is organized as a small hardware-and-ISA scaffold.
 - `BIOS_CMOS_OS.md` - BIOS, CMOS, NVRAM, API, GUI, and OS model.
 - `MEMORY_MODEL.md` - register and memory model.
 - `EXTENSION_PLAN.md` - future work.
+- `L0_TO_L10_CASH.md` - level 0 to 10 cash schedule.
 - `SYSTEM_COMPONENTS.md` - motherboard and surrounding component overview.
 - `TYPE_SYSTEM.md` - types, structs, and module conventions.
 - `MODULE_INDEX.md` - module index.

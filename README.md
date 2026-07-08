@@ -15,6 +15,7 @@ Each 1024-bit value is represented as 16 64-bit limbs.
 - `docs/BIOS_CMOS_OS.md` - BIOS, CMOS, NVRAM, API, GUI, and OS model.
 - `docs/MEMORY_MODEL.md` - register and memory model.
 - `docs/EXTENSION_PLAN.md` - next-step design notes.
+- `docs/L0_TO_L10_CASH.md` - level 0 to 10 cash schedule.
 - `docs/SYSTEM_COMPONENTS.md` - motherboard, RAM, storage, power, and bus overview.
 - `docs/REPO_LAYOUT.md` - directory map for the full scaffold.
 - `design/` - external reference survey and design notes.

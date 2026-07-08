@@ -7,6 +7,7 @@ build/
 build-*/
 cpp23/build/
 cpp23/build-*/
+cpp23/build-output/
 bin/
 
 # Editor and OS noise
