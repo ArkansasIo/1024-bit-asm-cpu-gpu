@@ -1,0 +1,31 @@
+name: arkan10000-ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  cpp23:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -S cpu10000 -B build/cpu10000 -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build/cpu10000 --parallel 2
+      - name: Unit tests
+        run: ctest --test-dir build/cpu10000 --output-on-failure
+
+  python-program-corpus:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Generate and execute 10,000 programs
+        run: python tools/validate_programs.py --count 10000 --out /tmp/arkan10000-programs
+      - name: Check corpus size
+        run: test "$(find /tmp/arkan10000-programs -maxdepth 1 -name 'program_*.asm' | wc -l)" -eq 10000
