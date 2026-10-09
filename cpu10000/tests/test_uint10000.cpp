@@ -7,7 +7,7 @@
 int main() {
     using arkan10000::UInt10000;
 
-    auto one = UInt10000::from_u64(1);
+    const auto one = UInt10000::from_u64(1);
     UInt10000 result{};
     assert(!one.add(one, result));
     assert(result.limbs[0] == 2);
@@ -22,7 +22,7 @@ int main() {
     assert(all_ones.shift_left(10000).is_zero());
     assert(all_ones.shift_right(10000).is_zero());
 
-    auto shifted = one.shift_left(9999);
+    const auto shifted = one.shift_left(9999);
     assert(shifted.limbs.back() == 0x8000U);
     assert(shifted.shift_right(9999) == one);
 
@@ -30,7 +30,15 @@ int main() {
     top.limbs.back() = UInt10000::top_mask;
     assert(!top.add(one, result));
     assert(result.limbs.back() == UInt10000::top_mask);
-    assert(result.limbs[0] == 1); // independent low and top limbs
+    assert(result.limbs[0] == 1);
+
+    UInt10000 top_plus_one{};
+    top_plus_one.limbs.back() = 1;
+    assert(top.add(top_plus_one, result));
+    assert(result.limbs.back() == 0);
+
+    const auto round_trip = one.shift_left(64).shift_right(64);
+    assert(round_trip == one);
 
     std::cout << "UInt10000 tests passed\n";
     return 0;
