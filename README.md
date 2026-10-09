@@ -25,6 +25,8 @@ A 10,000-bit value is represented as 157 little-endian 64-bit limbs. The final l
 - `asm/x86_64/` — NASM host helper routines.
 - `hardware/rtl/` — SystemVerilog research blocks.
 - `tools/arkan_vm.py` — Python reference interpreter for the draft text ISA.
+- `tools/arkan_gpu.py` — software GPU workgroup model for 10,000-bit arithmetic.
+- `tools/test_arkan_gpu.py` — GPU-model unit tests.
 - `tools/generate_programs.py` — deterministic program corpus generator.
 - `tools/validate_programs.py` — generate and execute a corpus and write a SHA-256 manifest.
 - `programs/samples/` — hand-written examples.
